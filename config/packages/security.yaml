@@ -1,0 +1,145 @@
+security:
+    encoders:
+        App\Entity\User:
+            algorithm: auto
+
+        # Memory User Provider
+
+        # this internal class is used by Symfony to represent in-memory users
+        Symfony\Component\Security\Core\User\User: 'auto'
+
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        # used to reload user from session & other features (e.g. switch_user)
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+        # Entity User Provider
+#        users:
+#            entity:
+                # the class of the entity that represents users
+#                class: App\Entity\User
+                # the property to query by - e.g username, email, etc
+#                property: username
+                # optional: if you're using multiple Doctrine entity
+                # managers, this option defines which one to use
+                # manager_name: customer
+
+        # When Using a custom Query to Load a user, you have to
+        # remove the property key
+
+        # Memory User Provider
+
+        backend_users:
+            memory:
+                users:
+                    john_admin: { password: '$argon2id$v=19$m=65536,t=4,p=1$WUJYWWs0M2JQd0VkejluLw$qJUIesVx+jIld7N+2vuu9H5g+gyiHZu2EtoieTZlLqs', roles: ['ROLE_ADMIN'] }
+                    jane_admin: { password: '$argon2id$v=19$m=65536,t=4,p=1$UURraUdTVjh4OWxyNEhTRw$y8u349D+sr+fUVowxJMx/5ep0y7/fg9B+3gO+pBFc5U', roles: ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'] }
+
+        # LDAP User Provider
+
+        my_ldap:
+            ldap:
+                service: Symfony\Component\Ldap\Ldap
+                base_dn: dc=example,dc=com
+                search_dn: "cn=read-only-admin,dc=example,dc=com"
+                search_password: password
+                default_roles: ROLE_USER
+                uid_key: uid
+                extra_fields: ['email']
+
+
+        # Chain User Provider
+
+        legacy_users:
+            entity:
+                class: App\Entity\User
+
+        users:
+            entity:
+                class: App\Entity\User
+
+        all_users:
+            chain:
+                providers: ['legacy_users', 'users', 'backend']
+
+
+        # Custom User Provider
+
+        # the name of your user provider can be anything
+        your_custom_user_provider:
+            id: App\Security\UserProvider
+
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            anonymous: lazy
+            provider: app_user_provider
+            # custom user provider
+            # provider: your_custom_user_provider
+
+            logout:
+                path:   app_logout
+            guard:
+                authenticators:
+                    - App\Security\LoginFormAuthenticator
+
+                # where to redirect after logout
+                # target: app_any_route
+
+            # LDAP User Provider - Configuration example for form login
+
+#            form_login_ldap:
+#                # ....
+#                service: Symfony\Component\Ldap\Ldap
+#                dn_string: 'uid={username},dc=example,dc=com'
+
+            # LDAP User Provider - Configuration example for HTTP Basic
+
+            stateless: true
+            http_basic_ldap:
+                service: Symfony\Component\Ldap\Ldap
+                dn_string: 'uid={username},dc=example,dc=com'
+
+            # LDAP User Provider - Configuration example for form login
+            # and query string
+
+            form_login_ldap:
+                service: Symfony\Component\Ldap\Ldap
+                dn_string: 'dc=example,dc=com'
+                query_string: '(&(uid={username})(memberOf=cn=users,ou=Services,dc=example,dc=com))'
+                search_dn: '...'
+                search_password: 'the-raw-password'
+
+            switch_user: { role: CAN_SWITCH_USER }
+
+
+    role_hierarchy:
+        ROLE_ADMIN:         ROLE_USER
+        ROLE_SUPER_ADMIN:   [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+
+
+            # activate different ways to authenticate
+            # https://symfony.com/doc/current/security.html#firewalls-authentication
+
+            # https://symfony.com/doc/current/security/impersonating_user.html
+            # switch_user: true
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        # matches /admin/users/*
+        - { path: '^/admin/users', roles: ROLE_SUPER_ADMIN }
+
+        # matches /admin/* except for anything matching the above rule
+        - { path: '^/admin', roles: ROLE_ADMIN }
+
+
+
+
+
