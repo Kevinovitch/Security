@@ -46,8 +46,16 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements P
 
     public function supports(Request $request)
     {
+        // GOOD behavior: only authenticate (i.e. return true) on a specific route
         return self::LOGIN_ROUTE === $request->attributes->get('_route')
             && $request->isMethod('POST');
+
+        // e.g. your login system authenticates by the user's IP adresss
+        // BAD behavior: So, you decide to "always" return true so that
+        // you can check the user's IP address on every request
+
+        return true;
+
     }
 
     public function getCredentials(Request $request)

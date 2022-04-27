@@ -87,7 +87,7 @@ security:
                 path:   app_logout
             guard:
                 authenticators:
-                    - App\Security\LoginFormAuthenticator
+                    - App\Security\TokenAuthenticator
 
                 # where to redirect after logout
                 # target: app_any_route
@@ -118,6 +118,24 @@ security:
 
             switch_user: { role: CAN_SWITCH_USER }
 
+            remember_me:
+                secret:    '%kernel.secret%'
+                lifetime:  60400 # 1 week in seconds
+                path:      /
+                # by default, the feature is enabled by checking a
+                # checkbox in the login form (see below), uncomment the
+                # following line to always enable it
+                #always_remember_me: true
+                token_provider: 'Symfony\Bridge\Doctrine\Security\RememberMe\DoctrineTokenProvider'
+
+        wsse_secured:
+            pattern:   ^/api/
+            stateless: true
+            wsse:      { lifetime: 30}
+
+        secured_area:
+            request_matcher: app.firewall.secured_area.request_matcher
+
 
     role_hierarchy:
         ROLE_ADMIN:         ROLE_USER
@@ -138,6 +156,41 @@ security:
 
         # matches /admin/* except for anything matching the above rule
         - { path: '^/admin', roles: ROLE_ADMIN }
+
+        # access_control chapter
+        -  { path: '^/admin', roles: ROLE_USER_IP, ip: 127.0.0.1 }
+        -  { path: '^/admin', roles: ROLE_USER_PORT, ip: 127.0.0.1, port: 8080 }
+        -  { path: '^/admin', roles: ROLE_USER_HOST, host: symfony\.com$ }
+        -  { path: '^/admin', roles: ROLE_USER_IP, methods: [POST, PUT] }
+
+        # example access_control chapter
+
+        # the 'ips' option supports IP addresses and subnet amsks
+        - { path: '^/internal', roles: IS_AUTHENTICATED_ANONYMOUSLY, ips: [127.0.0.1, ::1, 192.168.0.1/24] }
+        - { path: '^/internal', roles: ROLE_NO_ACCESS }
+
+
+        # securing by an expression
+        -
+            path: ^/_internal/secure
+            # the 'role' and 'allow-if' options work like an OR expression, so
+            # access is granted if the expression is TRUE or the user has ROLE_ADMIN
+            roles: 'ROLE_ADMIN'
+            allow_if =: "'127.0.0.1' == request.getClientIp() or request.headers.has('X-Secure-Access')"
+
+        # restrict to a port
+
+        - { path: ^/cart/checkout, roles: IS_AUTHENTICATED_ANONYMOUSLY, port: 8080 }
+
+        # forcing a channel
+        - { path: ^/cart/checkout, roles: IS_AUTHENTICATED_ANONYMOUSLY, requires_channel: https }
+
+    access_decision_manager:
+        strategy: unanimous
+        allow_if_all_abstain: false
+        # service: App\Security\MyCustomAccessDecisionManager
+        # ... Service à développer par la suite
+
 
 
 

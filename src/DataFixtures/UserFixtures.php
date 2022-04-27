@@ -26,6 +26,8 @@ class UserFixtures extends Fixture
             'salut'
         ));
 
+        $user->setLocale('fr');
+
         $user->setRoles(array('ROLE_USER'));
 
         $manager->persist($user);

@@ -44,3 +44,17 @@ services:
 
     App\Security\LoginFormAuthenticator:
         $userProvider: '@security.user.provider.concrete.backend_users'
+
+    App\EventSubscriber\LocaleSubscriber:
+        arguments: ['%kernel.default_locale%']
+        # uncomment the next line if you are not using autoconfigure
+        # tags: [kernel.event_subscriber]
+
+    Symfony\Bridge\Doctrine\Security\RememberMe\DoctrineTokenProvider: ~
+
+    App\Security\Authentication\Provider\WsseProvider:
+        arguments:
+            $cachePool: '@cache.app'
+
+    App\Security\Firewall\WsseListener:
+        arguments: ['@security.token_storage', '@security.authentication.manager']

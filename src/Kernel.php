@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\DependencyInjection\Security\Factory\WsseFactory;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileResource;
@@ -29,6 +30,13 @@ class Kernel extends BaseKernel
     {
         return \dirname(__DIR__);
     }
+
+    public function build(ContainerBuilder $container)
+    {
+        $extension = $container->getExtension('security');
+        $extension->addSecurityListenerFactory(new WsseFactory());
+    }
+
 
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
